@@ -5,7 +5,7 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.home.amazon.serverless.model.Book;
+import com.home.amazon.serverless.model.Employee;
 import com.home.amazon.serverless.utils.DependencyFactory;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,7 +37,7 @@ public class DeleteItemFunctionTest {
     private DynamoDbEnhancedClient client;
 
     @Mock
-    private DynamoDbTable<Book> table;
+    private DynamoDbTable<Employee> table;
 
     @Mock
     private APIGatewayProxyRequestEvent request;
@@ -47,11 +47,11 @@ public class DeleteItemFunctionTest {
 
     @Test
     public void shouldDeleteAndReturnItem() throws JsonProcessingException {
-        Book testBook = new Book();
-        testBook.setIsbn(TEST_PARTITION_KEY_VALUE);
+        Employee testBook = new Employee();
+        testBook.setPsno(TEST_PARTITION_KEY_VALUE);
         when(client.table(eq(TEST_TABLE_NAME), any(TableSchema.class))).thenReturn(table);
         Map<String, String> pathParameters = new HashMap<>();
-        pathParameters.put(Book.PARTITION_KEY, TEST_PARTITION_KEY_VALUE);
+        pathParameters.put(Employee.PARTITION_KEY, TEST_PARTITION_KEY_VALUE);
         when(request.getPathParameters()).thenReturn(pathParameters);
         when(table.deleteItem(eq(Key.builder().partitionValue(TEST_PARTITION_KEY_VALUE).build()))).thenReturn(testBook);
 
@@ -61,7 +61,7 @@ public class DeleteItemFunctionTest {
             DeleteItemFunction handler = new DeleteItemFunction();
             APIGatewayProxyResponseEvent response = handler.handleRequest(request, context);
             verify(table).deleteItem(eq(Key.builder().partitionValue(TEST_PARTITION_KEY_VALUE).build()));
-            assertEquals(testBook, new ObjectMapper().readValue(response.getBody(), Book.class));
+            assertEquals(testBook, new ObjectMapper().readValue(response.getBody(), Employee.class));
         }
     }
 

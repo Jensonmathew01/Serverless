@@ -16,19 +16,18 @@ import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class UpdateItemFunctionTest {
+public class PostItemFunctionTest {
 
     private static final String TEST_TABLE_NAME = "TestTable";
     private static final String TEST_PARTITION_KEY_VALUE = "123";
+    private static final String TEST_AUTHOR_NAME = "TestAuthor";
 
     @Mock
     private DynamoDbEnhancedClient client;
@@ -42,72 +41,38 @@ public class UpdateItemFunctionTest {
     @Mock
     private Context context;
 
-
     @Test
-    public void shouldPutItemIfBodyIsValid() throws JsonProcessingException {
+    public void shouldUpdateItemIfBodyIsValid() throws JsonProcessingException {
         Employee testBook = new Employee();
         testBook.setPsno(TEST_PARTITION_KEY_VALUE);
+        testBook.setEmployeefullname(TEST_AUTHOR_NAME);
         when(client.table(eq(TEST_TABLE_NAME), any(TableSchema.class))).thenReturn(table);
         when(request.getBody()).thenReturn(new ObjectMapper().writeValueAsString(testBook));
-        Map<String, String> pathParameters = new HashMap<>();
-        pathParameters.put(Employee.PARTITION_KEY, TEST_PARTITION_KEY_VALUE);
-        when(request.getPathParameters()).thenReturn(pathParameters);
+        when(table.updateItem(eq(testBook))).thenReturn(testBook);
 
         try (MockedStatic<DependencyFactory> dependencyFactoryMockedStatic = mockStatic(DependencyFactory.class)) {
             dependencyFactoryMockedStatic.when(DependencyFactory::dynamoDbEnhancedClient).thenReturn(client);
             dependencyFactoryMockedStatic.when(DependencyFactory::tableName).thenReturn(TEST_TABLE_NAME);
-            UpdateItemFunction handler = new UpdateItemFunction();
+            PostItemFunction handler = new PostItemFunction();
             APIGatewayProxyResponseEvent response = handler.handleRequest(request, context);
-            verify(table).putItem(eq(testBook));
-            assertEquals(PostItemFunction.STATUS_CODE_CREATED, response.getStatusCode());
+            verify(table).updateItem(eq(testBook));
+            assertEquals(testBook, new ObjectMapper().readValue(response.getBody(), Employee.class));
         }
 
     }
 
     @Test
-    public void shouldNotPutItemIfIsbnIsDifferent() throws JsonProcessingException {
-        Employee testBook = new Employee();
-        testBook.setPsno(TEST_PARTITION_KEY_VALUE);
-        when(request.getBody()).thenReturn(new ObjectMapper().writeValueAsString(testBook));
-        Map<String, String> pathParameters = new HashMap<>();
-        pathParameters.put(Employee.PARTITION_KEY, "1234");
-        when(request.getPathParameters()).thenReturn(pathParameters);
+    public void shouldNotUpdateItemIfBodyMissed() {
 
         try (MockedStatic<DependencyFactory> dependencyFactoryMockedStatic = mockStatic(DependencyFactory.class)) {
             dependencyFactoryMockedStatic.when(DependencyFactory::dynamoDbEnhancedClient).thenReturn(client);
             dependencyFactoryMockedStatic.when(DependencyFactory::tableName).thenReturn(TEST_TABLE_NAME);
-            UpdateItemFunction handler = new UpdateItemFunction();
+            PostItemFunction handler = new PostItemFunction();
             APIGatewayProxyResponseEvent response = handler.handleRequest(request, context);
             verifyNoInteractions(table);
-            assertEquals(PostItemFunction.STATUS_CODE_BAD_REQUEST, response.getStatusCode());
+            assertTrue(response.getBody().isEmpty());
         }
 
-    }
-
-    @Test
-    public void shouldNotPutItemIfBodyIsNotValid() {
-        when(request.getBody()).thenReturn("");
-
-        try (MockedStatic<DependencyFactory> dependencyFactoryMockedStatic = mockStatic(DependencyFactory.class)) {
-            dependencyFactoryMockedStatic.when(DependencyFactory::dynamoDbEnhancedClient).thenReturn(client);
-            dependencyFactoryMockedStatic.when(DependencyFactory::tableName).thenReturn(TEST_TABLE_NAME);
-            UpdateItemFunction handler = new UpdateItemFunction();
-            APIGatewayProxyResponseEvent response = handler.handleRequest(request, context);
-            verifyNoInteractions(table);
-            assertEquals(PostItemFunction.STATUS_CODE_NO_CONTENT, response.getStatusCode());
-        }
-    }
-
-    @Test
-    public void shouldNotPutItemIfBodyIsMissed() {
-        try (MockedStatic<DependencyFactory> dependencyFactoryMockedStatic = mockStatic(DependencyFactory.class)) {
-            dependencyFactoryMockedStatic.when(DependencyFactory::dynamoDbEnhancedClient).thenReturn(client);
-            dependencyFactoryMockedStatic.when(DependencyFactory::tableName).thenReturn(TEST_TABLE_NAME);
-            UpdateItemFunction handler = new UpdateItemFunction();
-            APIGatewayProxyResponseEvent response = handler.handleRequest(request, context);
-            verifyNoInteractions(table);
-            assertEquals(PostItemFunction.STATUS_CODE_NO_CONTENT, response.getStatusCode());
-        }
     }
 
 }

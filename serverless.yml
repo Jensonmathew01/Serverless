@@ -1,15 +1,15 @@
-org: rimironenko
-app: aws-serverless-framework-app
-service: items-api
+#org: rimironenko
+#app: aws-serverless-framework-app
+service: Employee-api
 
-frameworkVersion: '2'
+frameworkVersion: '3'
 
 provider:
   name: aws
-  runtime: java8
+  runtime: java11
   lambdaHashingVersion: 20201221
   environment:
-    TABLE: ${self:service}-${sls:stage}-BooksDynamoDbTable-${sls:instanceId}
+    TABLE: ${self:service}-${sls:stage}-EmployeeDynamoDbTable-${sls:instanceId}
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -20,7 +20,8 @@ provider:
         - dynamodb:UpdateItem
         - dynamodb:DeleteItem
       Resource: "arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/${self:provider.environment.TABLE}"
-
+  stage: dev
+  region: us-east-1
 package:
   artifact: target/aws-serverless-framework-app-dev.jar
 
@@ -29,37 +30,37 @@ functions:
     handler: com.home.amazon.serverless.lambda.GetItemFunction
     events:
       - http:
-          path: /books/{isbn}
+          path: /emps/{psno}
           method: get
-  puttItem:
-    handler: com.home.amazon.serverless.lambda.PutItemFunction
+  putItem:
+    handler: com.home.amazon.serverless.lambda.PostItemFunction
     events:
       - http:
-          path: /books
+          path: /emps
           method: post
   updatetItem:
     handler: com.home.amazon.serverless.lambda.UpdateItemFunction
     events:
       - http:
-          path: /books/{isbn}
+          path: /emps/{psno}
           method: put
   deletetItem:
     handler: com.home.amazon.serverless.lambda.DeleteItemFunction
     events:
       - http:
-          path: /books/{isbn}
+          path: /emps/{psno}
           method: delete
 
 resources:
   Resources:
-    BooksDynamoDbTable:
+    EmployeeDynamoDbTable:
       Type: 'AWS::DynamoDB::Table'
       Properties:
         AttributeDefinitions:
-          - AttributeName: isbn
+          - AttributeName: psno
             AttributeType: S
         KeySchema:
-          - AttributeName: isbn
+          - AttributeName: psno
             KeyType: HASH
         ProvisionedThroughput:
           ReadCapacityUnits: 1

@@ -3,7 +3,7 @@ package com.home.amazon.serverless.lambda;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
-import com.home.amazon.serverless.model.Book;
+import com.home.amazon.serverless.model.Employee;
 import com.home.amazon.serverless.utils.DependencyFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,7 +37,7 @@ public class GetItemFunctionTest {
     private DynamoDbEnhancedClient client;
 
     @Mock
-    private DynamoDbTable<Book> table;
+    private DynamoDbTable<Employee> table;
 
     @Mock
     private APIGatewayProxyRequestEvent request;
@@ -53,9 +53,9 @@ public class GetItemFunctionTest {
     @Test
     public void shouldReturnItemIfExists() {
         Map<String, String> pathParameters = new HashMap<>();
-        pathParameters.put(Book.PARTITION_KEY, TEST_PARTITION_KEY_VALUE);
-        Book testBook = new Book();
-        testBook.setIsbn(TEST_PARTITION_KEY_VALUE);
+        pathParameters.put(Employee.PARTITION_KEY, TEST_PARTITION_KEY_VALUE);
+        Employee testBook = new Employee();
+        testBook.setPsno(TEST_PARTITION_KEY_VALUE);
         when(table.getItem(any(Key.class))).thenReturn(testBook);
         when(request.getPathParameters()).thenReturn(pathParameters);
 
